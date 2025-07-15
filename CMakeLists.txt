@@ -230,7 +230,7 @@ set(LIBRARIES "")
 macro(generate_library LIB_NAME ARCH PLATFORM RUNTIME)
 	add_custom_command(OUTPUT ${INTERMEDIATE}/${LIB_NAME}.lib
 		DEPENDS scc_bootstrap
-		COMMAND ${CMAKE_COMMAND} -E env ASAN_OPTIONS=detect_leaks=0 $<TARGET_FILE:scc_bootstrap> ${${RUNTIME}} -f lib -o ${INTERMEDIATE}/${LIB_NAME}.lib
+		COMMAND ${CMAKE_COMMAND} -E env ASAN_OPTIONS=detect_leaks=0 $<TARGET_FILE:scc_bootstrap> ${${RUNTIME}} --arch ${ARCH} --platform ${PLATFORM} -f lib -o ${INTERMEDIATE}/${LIB_NAME}.lib
 		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 		COMMENT "Generating runtime library ${LIB_NAME}")
 
