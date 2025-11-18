@@ -29,7 +29,7 @@ unsigned int alarm(unsigned int seconds)
 	it.it_interval.tv_sec = 0;
 	it.it_interval.tv_usec = 0;
 	__syscall(SYS_setitimer, ITIMER_REAL, &it, &it);
-	uint32_t result = it.it_value.tv_sec;
+	uint32_t result = (uint32_t)it.it_value.tv_sec;
 	if (it.it_value.tv_usec > 500000 || (!result && it.it_value.tv_usec))
 		result++;
 	return result;

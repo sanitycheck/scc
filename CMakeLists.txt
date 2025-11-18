@@ -20,8 +20,10 @@ file(GLOB COMPILER_SOURCES
 if(UNIX)
 	set_source_files_properties(
 		${INTERMEDIATE}/codegen/PreprocessLexer.cpp
+		${INTERMEDIATE}/codegen/PreprocessParser.cpp
 		${INTERMEDIATE}/codegen/CodegenLexer.cpp
-		PROPERTIES COMPILE_FLAGS "-Wno-unused-function -Wno-deprecated-register")
+		${INTERMEDIATE}/codegen/CodegenParser.cpp
+		PROPERTIES COMPILE_FLAGS "-Wno-unused-function -Wno-deprecated-register -Wno-unused-but-set-variable")
 endif()
 
 add_executable(scc_codegen ${CODEGEN_SOURCES}
@@ -124,6 +126,15 @@ add_library(scc_common ${COMPILER_SOURCES}
 	${INTERMEDIATE}/MipsCodeGen.cpp
 	${INTERMEDIATE}/Version.cpp
 	${INTERMEDIATE}/asmx86/asmx86str.h)
+
+if (UNIX)
+	set_source_files_properties(
+		${INTERMEDIATE}/PreprocessLexer.cpp
+		${INTERMEDIATE}/PreprocessParser.cpp
+		${INTERMEDIATE}/CodeLexer.cpp
+		${INTERMEDIATE}/CodeParser.cpp
+		PROPERTIES COMPILE_FLAGS "-Wno-unused-function -Wno-deprecated-register -Wno-unused-but-set-variable")
+endif ()
 
 add_custom_command(OUTPUT ${INTERMEDIATE}/PreprocessLexer.cpp ${INTERMEDIATE}/PreprocessLexer.h
 	DEPENDS ${PROJECT_SOURCE_DIR}/Preprocess.lex ${INTERMEDIATE}/PreprocessParser.h
