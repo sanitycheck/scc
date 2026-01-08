@@ -226,6 +226,7 @@ void __resolve_imports_LoadLibrary(const uint8_t* importDesc, void*** iats);
 void __resolve_imports_LoadLibraryEx(const uint8_t* importDesc, void*** iats);
 void __resolve_imports_pebscan(const uint32_t* importDesc, void*** iats);
 void __resolve_imports_pebscan_loadlibrary(const uint8_t* importDesc, void*** iats);
+void* __resolve_import_single(const char* module, const char* name);
 
 #endif
 

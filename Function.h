@@ -205,6 +205,7 @@ public:
 
 	bool IsImportedFunction() const { return m_imported; }
 	const std::string& GetImportModule() const { return m_importModule; }
+	void ClearImport();
 
 	void ReplaceWithFixedAddress(uint64_t addr);
 	void ReplaceWithFixedPointer(uint64_t addr);

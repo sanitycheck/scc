@@ -78,6 +78,7 @@ void Usage()
 	fprintf(stderr, "    --polymorph                       Generate different code on each run\n");
 	fprintf(stderr, "    --preserve <reg>                  Preserve the value of the given register\n");
 	fprintf(stderr, "    --unloaded-modules                Uses modules that have not been loaded yet\n");
+	fprintf(stderr, "    --lazy-imports                    Resolve imported functions on first use (Windows non-PE)\n");
 	fprintf(stderr, "    --unsafe-stack                    Stack pointer may be near the code\n");
 	fprintf(stderr, "    --return-reg <reg>                Use alternate register as the return value\n");
 	fprintf(stderr, "    --return-high-reg <reg>           Use alternate register as the upper 32 bits of return\n");
@@ -128,6 +129,7 @@ int main(int argc, char* argv[])
 	settings.gui = false;
 	settings.forcePebScan = false;
 	settings.usesUnloadedModule = false;
+	settings.lazyImports = false;
 	settings.allowReturn = false;
 	settings.unsafeStack = false;
 	settings.execStack = false;
@@ -632,6 +634,11 @@ int main(int argc, char* argv[])
 		else if (!strcmp(argv[i], "--unloaded-modules"))
 		{
 			settings.usesUnloadedModule = true;
+			continue;
+		}
+		else if (!strcmp(argv[i], "--lazy-imports"))
+		{
+			settings.lazyImports = true;
 			continue;
 		}
 		else if (!strcmp(argv[i], "--unsafe-stack"))

@@ -63,6 +63,7 @@ struct Settings
 	uint32_t preferredBits;
 	bool bigEndian;
 	bool gui, forcePebScan, usesUnloadedModule;
+	bool lazyImports;
 
 	bool allowReturn;
 	bool unsafeStack;

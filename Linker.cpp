@@ -1176,6 +1176,96 @@ bool Linker::FinalizeLink()
 	if (startState.HasErrors())
 		return false;
 
+	// Generate lazy import stubs for Windows non-PE output
+	if (m_settings.lazyImports && (m_settings.os == OS_WINDOWS) && (m_settings.format != FORMAT_PE))
+	{
+		map< string, Ref<Function> >::iterator resolveFuncRef = m_functionsByName.find("__resolve_import_single");
+		if (resolveFuncRef == m_functionsByName.end())
+		{
+			fprintf(stderr, "error: lazy imports require __resolve_import_single\n");
+			return false;
+		}
+
+		Ref<Function> resolveFunc = resolveFuncRef->second;
+		vector< Ref<Function> > lazyFunctions;
+
+		for (vector< Ref<Function> >::iterator i = m_functions.begin(); i != m_functions.end(); ++i)
+		{
+			Ref<Function> func = *i;
+			if (!func->IsImportedFunction())
+				continue;
+
+			if (func->HasVariableArguments())
+			{
+				fprintf(stderr, "%s:%d: warning: lazy imports do not support varargs for '%s'\n",
+					func->GetLocation().fileName.c_str(), func->GetLocation().lineNumber, func->GetName().c_str());
+				continue;
+			}
+
+			vector< Ref<Variable> > paramVars;
+			vector< pair< Ref<Type>, string > > paramTypes;
+			for (size_t p = 0; p < func->GetParameters().size(); p++)
+			{
+				string paramName = func->GetParameters()[p].name;
+				if (paramName.size() == 0)
+				{
+					char buf[32];
+					snprintf(buf, sizeof(buf), "arg%u", (unsigned)p);
+					paramName = buf;
+				}
+				paramTypes.push_back(pair< Ref<Type>, string >(func->GetParameters()[p].type, paramName));
+				paramVars.push_back(new Variable(p, func->GetParameters()[p].type, paramName));
+			}
+
+			Type* funcType = Type::FunctionType(func->GetReturnValue(), func->GetCallingConvention(), paramTypes);
+			Location loc = func->GetLocation();
+
+			Ref<Expr> body = new Expr(EXPR_SEQUENCE);
+
+			vector< Ref<Expr> > resolveParams;
+			resolveParams.push_back(Expr::StringExpr(loc, func->GetImportModule()));
+			resolveParams.push_back(Expr::StringExpr(loc, func->GetName()));
+			Ref<Expr> resolveCall = Expr::CallExpr(loc, Expr::FunctionExpr(loc, resolveFunc), resolveParams);
+
+			vector< Ref<Expr> > callParams;
+			for (size_t p = 0; p < paramVars.size(); p++)
+				callParams.push_back(Expr::VariableExpr(loc, paramVars[p]));
+
+			Ref<Expr> callee = Expr::CastExpr(loc, funcType, resolveCall);
+			Ref<Expr> callExpr = Expr::CallExpr(loc, callee, callParams);
+
+			if (func->GetReturnValue()->GetClass() == TYPE_VOID)
+			{
+				body->AddChild(callExpr);
+				body->AddChild(new Expr(loc, EXPR_RETURN_VOID));
+			}
+			else
+			{
+				body->AddChild(Expr::UnaryExpr(loc, EXPR_RETURN, callExpr));
+			}
+
+			func->SetVariables(paramVars);
+			func->SetBody(body);
+			func->ClearImport();
+			lazyFunctions.push_back(func);
+		}
+
+		for (vector< Ref<Function> >::iterator i = lazyFunctions.begin(); i != lazyFunctions.end(); ++i)
+		{
+			ParserState lazyState(m_settings, (*i)->GetName(), NULL);
+			(*i)->SetBody((*i)->GetBody()->Simplify(&lazyState));
+			(*i)->GetBody()->ComputeType(&lazyState, *i);
+			(*i)->SetBody((*i)->GetBody()->Simplify(&lazyState));
+			if (lazyState.HasErrors())
+				return false;
+
+			(*i)->GenerateIL(&lazyState);
+			(*i)->ReportUndefinedLabels(&lazyState);
+			if (lazyState.HasErrors())
+				return false;
+		}
+	}
+
 	// Replace functions with known addresses so that they are called directly
 	for (map<string, uint64_t>::iterator i = m_settings.funcAddrs.begin(); i != m_settings.funcAddrs.end(); ++i)
 	{

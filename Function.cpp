@@ -113,6 +113,13 @@ Function::Function(const FunctionInfo& info, const vector< Ref<Variable> >& vars
 }
 
 
+void Function::ClearImport()
+{
+	m_imported = false;
+	m_importModule.clear();
+}
+
+
 Function::~Function()
 {
 	for (vector<ILBlock*>::iterator i = m_ilBlocks.begin(); i != m_ilBlocks.end(); i++)
